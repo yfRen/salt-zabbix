@@ -9,38 +9,64 @@ zabbix-server-install:
       - zabbix-get
       - mariadb-server
 
-mariadb-service:
-  service.running:
-    - name: mariadb.service
-    - enable: True
-    - require:
-      - pkg: zabbix-server-install
+# Local install mariadb database
+#mariadb-service:
+#  service.running:
+#    - name: mariadb.service
+#    - enable: True
+#    - require:
+#      - pkg: zabbix-server-install
+#
+#zabbix-scripts:
+#  file.managed:
+#    - name: /usr/local/src/local_db_config.sh
+#    - source: salt://emperor/zabbix/files/local_db_config.sh
+#    - user: root
+#    - group: root
+#    - mode: 755
+#    - template: jinja
+#    - defaults:
+#      DBNAME: {{ pillar['zabbix']['DBNAME'] }}
+#      DBUSER: {{ pillar['zabbix']['DBUSER'] }}
+#      ZABBIX_HOST: {{ pillar['zabbix']['ZABBIX_HOST'] }}
+#      DBPASSWORD: {{ pillar['zabbix']['DBPASSWORD'] }}
+#  cmd.run:
+#    - name: cd /usr/local/src/ && sh local_db_config.sh && sleep 2 && touch local_db_config.sh.lock
+#    - unless: test -e /usr/local/src/local_db_config.sh.lock
+#    - require:
+#      - service: mariadb-service
 
+# other database config
 zabbix-scripts:
   file.managed:
-    - name: /usr/local/src/database-config.sh
-    - source: salt://zabbix/files/database-config.sh
+    - name: /usr/local/src/other_db_config.sh
+    - source: salt://emperor/zabbix/files/other_db_config.sh
     - user: root
     - group: root
     - mode: 755
     - template: jinja
     - defaults:
-      ZABBIX_HOST: {{ pillar['zabbix']['ZABBIX_HOST'] }}
+      DBHOST: {{ pillar['zabbix']['DBHOST'] }}
+      DBNAME: {{ pillar['zabbix']['DBNAME'] }}
+      DBUSER: {{ pillar['zabbix']['DBUSER'] }}
       DBPASSWORD: {{ pillar['zabbix']['DBPASSWORD'] }}
+      DBPORT: {{ pillar['zabbix']['DBPORT'] }}
   cmd.run:
-    - name: cd /usr/local/src/ && sh database-config.sh && sleep 2 && touch database-config.sh.lock
-    - unless: test -e /usr/local/src/database-config.sh.lock
-    - require:
-      - service: mariadb-service
+    - name: cd /usr/local/src/ && sh other_db_config.sh && sleep 2 && touch other_db_config.sh.lock
+    - unless: test -e /usr/local/src/other_db_config.sh.lock
 
 zabbix-config:
   file.managed:
     - name: /etc/zabbix/zabbix_server.conf
-    - source: salt://zabbix/files/zabbix_server.conf
+    - source: salt://emperor/zabbix/files/zabbix_server.conf
     - template: jinja
     - defaults:
+      SOURCEIP: {{ pillar['zabbix']['SOURCEIP'] }}
       DBHOST: {{ pillar['zabbix']['DBHOST'] }}
+      DBNAME: {{ pillar['zabbix']['DBNAME'] }}
+      DBUSER: {{ pillar['zabbix']['DBUSER'] }}
       DBPASSWORD: {{ pillar['zabbix']['DBPASSWORD'] }}
+      DBPORT: {{ pillar['zabbix']['DBPORT'] }}
     - require:
       - cmd: zabbix-scripts
 
@@ -54,7 +80,7 @@ zabbix-service:
 apache-config:
   file.managed:
     - name: /etc/httpd/conf.d/zabbix.conf
-    - source: salt://zabbix/files/zabbix.conf
+    - source: salt://emperor/zabbix/files/zabbix.conf
     - require:
       - service: zabbix-service
 

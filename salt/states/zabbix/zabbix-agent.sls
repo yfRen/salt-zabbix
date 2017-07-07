@@ -10,7 +10,7 @@ zabbix-agent-install:
 agent-config:
   file.managed:
     - name: /etc/zabbix/zabbix_agentd.conf
-    - source: salt://zabbix/files/zabbix_agentd.conf
+    - source: salt://emperor/zabbix/files/zabbix_agentd.conf
     - template: jinja
     - defaults:
       ZABBIX_SERVER_HOST: {{ pillar['zabbix']['ZABBIX_SERVER_HOST'] }}
@@ -20,7 +20,7 @@ agent-config:
 zabbix-scripts:
   file.recurse:
     - name: /var/zabbix
-    - source: salt://zabbix/files/zabbix
+    - source: salt://emperor/zabbix/files/zabbix
     - user: root
     - group: root
     - file_mode: 755
